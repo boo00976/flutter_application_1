@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -221,13 +221,17 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                 ),
               ),
               const SizedBox(height: 16),
+            
               TextField(
                 controller: priceCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly, // 只能輸入數字
+                ],
                 decoration: const InputDecoration(
                   labelText: '價格',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
               SizedBox(
