@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +33,7 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
   final List<String> tags = ['全部', '滷肉飯', '雞絲飯', '控肉飯', '雞魯飯'];
   final Set<String> selectedTags = {'全部'};
 
-  // 留言清單：加上 likes 欄位
+  // 留言清單（帶 likes 欄位）
   final List<Map<String, dynamic>> comments = [
     {'user': '朋朋 1', 'content': '內容 A', 'time': '10:01', 'likes': 2},
     {'user': '朋朋 2', 'content': '內容 B', 'time': '10:05', 'likes': 0},
@@ -40,6 +41,10 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 先排序好留言（依 likes 降序）
+    final sortedComments = [...comments]
+      ..sort((a, b) => b['likes'].compareTo(a['likes']));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('上標 Title'),
@@ -49,32 +54,16 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 子區塊區域
+            // 子區塊
             _buildSubBlocks(context),
-
             const SizedBox(height: 12),
 
             // 標籤欄
             _TagBar(
               tags: tags,
               selected: selectedTags,
-              onToggle: (t) {
-                setState(() {
-                  if (t == '全部') {
-                    selectedTags
-                      ..clear()
-                      ..add('全部');
-                  } else {
-                    if (selectedTags.contains('全部')) selectedTags.remove('全部');
-                    if (!selectedTags.add(t)) {
-                      selectedTags.remove(t);
-                      if (selectedTags.isEmpty) selectedTags.add('全部');
-                    }
-                  }
-                });
-              },
+              onToggle: _toggleTag,
             ),
-
             const SizedBox(height: 16),
 
             // 留言板
@@ -84,7 +73,7 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: Colors.black.withOpacity(0.06),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -99,14 +88,19 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                       children: [
                         const Text(
                           '留言板',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(99),
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.12),
                           ),
                           child: Text('${comments.length}'),
                         ),
@@ -121,16 +115,15 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                   ),
                   const Divider(height: 1),
 
-                  // 留言列表 (按讚數排序)
+                  // 留言列表
                   ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comments.length,
+                    itemCount: sortedComments.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
-                      final sortedComments = [...comments]
-                        ..sort((a, b) => b['likes'].compareTo(a['likes']));
                       final c = sortedComments[index];
                       return _CommentBubble(
                         username: c['user'],
@@ -168,13 +161,31 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          children: List.generate(1, (i) => _SubBlockCard(index: i + 1)),
+          children: List.generate(
+            1,
+            (i) => _SubBlockCard(index: i + 1),
+          ),
         ),
       ),
     );
   }
 
-  // --- 滑出新增熱門品項表單 ---
+  // --- 標籤切換 ---
+  void _toggleTag(String t) {
+    setState(() {
+      if (t == '全部') {
+        selectedTags..clear()..add('全部');
+      } else {
+        if (selectedTags.contains('全部')) selectedTags.remove('全部');
+        if (!selectedTags.add(t)) {
+          selectedTags.remove(t);
+          if (selectedTags.isEmpty) selectedTags.add('全部');
+        }
+      }
+    });
+  }
+
+  // --- 新增熱門品項表單 ---
   void _showAddMenuSheet() {
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController priceCtrl = TextEditingController();
@@ -223,11 +234,12 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
               const SizedBox(height: 16),
               TextField(
                 controller: priceCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
                   labelText: '價格',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -262,15 +274,13 @@ class _SubBlockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(
-        maxHeight: 300, // 限制子區塊高度
-      ),
+      constraints: const BoxConstraints(maxHeight: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -280,16 +290,13 @@ class _SubBlockCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {}, // 點擊事件
+          onTap: () {},
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  child: Text('$index'),
-                ),
+                CircleAvatar(radius: 16, child: Text('$index')),
                 const SizedBox(height: 8),
                 Text(
                   '子區塊 $index',
@@ -302,7 +309,7 @@ class _SubBlockCard extends StatelessWidget {
                     Icons.chevron_right,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -334,56 +341,57 @@ class _TagBar extends StatelessWidget {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-
-       Wrap(
-         spacing: 12,
-         runSpacing: 12,
-         children: [
-           for (final t in tags)
-           GestureDetector(
-             onTap: () => onToggle(t),
-             child: AnimatedScale(
-               scale: selected.contains(t) ? 1.1 : 1.0, // 選取時放大
-               duration: const Duration(milliseconds: 200),
-               curve: Curves.easeInOut,
-               child: Container(
-                 width: 100,
-                 height: 60,
-                 alignment: Alignment.center,
-                 decoration: BoxDecoration(
-                   color: selected.contains(t)
-                       ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
-                       : Theme.of(context).colorScheme.surface,
-                   borderRadius: BorderRadius.circular(12),
-                   border: Border.all(
-                     color: selected.contains(t)
-                         ? Theme.of(context).colorScheme.primary
-                         : Colors.grey.shade400,
-                     width: 2,
-                   ),
-                 ),
-                 child: Text(
-                   t,
-                   style: TextStyle(
-                     fontSize: 16,
-                     fontWeight: FontWeight.w600,
-                     color: selected.contains(t)
-                         ? Theme.of(context).colorScheme.primary
-                         : Colors.black,
-                   ),
-                 ),
-               ),
-             ),
-           ),
-         ],
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final t in tags)
+              GestureDetector(
+                onTap: () => onToggle(t),
+                child: AnimatedScale(
+                  scale: selected.contains(t) ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  child: Container(
+                    width: 100,
+                    height: 60,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected.contains(t)
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.15)
+                          : Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected.contains(t)
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade400,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      t,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: selected.contains(t)
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
   }
 }
 
-
-// --- 留言泡泡 (加上讚) ---
+// --- 留言泡泡 ---
 class _CommentBubble extends StatelessWidget {
   const _CommentBubble({
     required this.username,
@@ -399,7 +407,7 @@ class _CommentBubble extends StatelessWidget {
   final int likes;
   final VoidCallback onLike;
 
-  @override                                             //
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -407,7 +415,7 @@ class _CommentBubble extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+          color: Theme.of(context).dividerColor.withOpacity(0.6),
         ),
       ),
       child: Row(
@@ -430,7 +438,10 @@ class _CommentBubble extends StatelessWidget {
                       time,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
                       ),
                     ),
                   ],
