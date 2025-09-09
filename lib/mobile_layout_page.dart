@@ -17,7 +17,7 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
   final Set<String> selectedTags = {'全部'};
 
   final List<Map<String, dynamic>> comments = [
-    {'user': '朋朋 1', 'content': '內容 A', 'time': '10:01', 'likes': 2},
+    {'user': '朋朋 1', 'content': '內容 A', 'time': '10:01', 'likes': 1},
     {'user': '朋朋 2', 'content': '內容 B', 'time': '10:05', 'likes': 0},
   ];
 
@@ -40,7 +40,9 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
               onToggle: (t) {
                 setState(() {
                   if (t == '全部') {
-                    selectedTags..clear()..add('全部');
+                    selectedTags
+                      ..clear()
+                      ..add('全部');
                   } else {
                     if (selectedTags.contains('全部')) selectedTags.remove('全部');
                     if (!selectedTags.add(t)) {
@@ -124,9 +126,10 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
     );
   }
 
+// --- 滑出新增熱門品項表單 ---
   void _showAddMenuSheet() {
-    final nameCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
+    final TextEditingController nameCtrl = TextEditingController();
+    final TextEditingController priceCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -144,28 +147,55 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: '菜名')),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '菜名',
+                  border: OutlineInputBorder(),
+                ),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: priceCtrl,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: '價格'),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly, // 只能輸入數字
+                ],
+                decoration: const InputDecoration(
+                  labelText: '價格',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  final name = nameCtrl.text.trim();
-                  final price = priceCtrl.text.trim();
-                  if (name.isNotEmpty && price.isNotEmpty) {
-                    setState(() {
-                      tags.add('$name - \$ $price');
-                    });
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('確定'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final name = nameCtrl.text.trim();
+                    final price = priceCtrl.text.trim();
+                    if (name.isNotEmpty && price.isNotEmpty) {
+                      setState(() {
+                        tags.add('$name - \$ $price');
+                      });
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: const Text('確定'),
+                ),
               ),
             ],
           ),
