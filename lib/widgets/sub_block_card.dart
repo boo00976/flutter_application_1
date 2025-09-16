@@ -1,56 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class SubBlockCard extends StatelessWidget {
-  const SubBlockCard({required this.index, super.key});
+  const SubBlockCard({super.key, required this.index});
   final int index;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(
-        maxHeight: 300, // 限制子區塊高度
-      ),
+      constraints: const BoxConstraints(maxHeight: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {}, // 點擊事件
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  child: Text('$index'),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '子區塊 $index',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Icon(
-                    Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.primary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: LatLng(24.785, 120.996), // 例如：新竹光復校區
+            initialZoom: 15,
+          ),
+          children: [
+            // 免費 OSM 圖磚
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.app',
+            ),
+            // Marker 範例
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: LatLng(24.785, 120.996),
+                  width: 60,
+                  height: 60,
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: Colors.red,
+                    size: 40,
                   ),
-                )
+                ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
