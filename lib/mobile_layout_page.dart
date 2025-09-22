@@ -168,28 +168,15 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: priceCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, // 只能輸入數字
-                ],
-                decoration: const InputDecoration(
-                  labelText: '價格',
-                  border: OutlineInputBorder(),
-                ),
-              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
                     final name = nameCtrl.text.trim();
-                    final price = priceCtrl.text.trim();
-                    if (name.isNotEmpty && price.isNotEmpty) {
+                    if (name.isNotEmpty) {
                       setState(() {
-                        tags.add('$name - \$ $price');
+                        tags.add('$name');
                       });
                     }
                     Navigator.pop(context);
