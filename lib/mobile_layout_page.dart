@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'insert_page.dart';
 
 import 'widgets/sub_block_card.dart';
 import 'widgets/tag_bar.dart';
@@ -93,6 +94,16 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline),
+                  tooltip: '跳轉',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const InsertPage()),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
                   tooltip: '新增熱門品項',
                   onPressed: _showAddMenuSheet,
                 ),
@@ -129,7 +140,6 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
 // --- 滑出新增熱門品項表單 ---
   void _showAddMenuSheet() {
     final TextEditingController nameCtrl = TextEditingController();
-    final TextEditingController priceCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
