@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'insert_page.dart';
 
 import 'widgets/sub_block_card.dart';
@@ -17,10 +19,56 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
   final List<String> tags = ['全部', '滷肉飯', '雞絲飯', '控肉飯', '雞魯飯'];
   final Set<String> selectedTags = {'全部'};
 
-  final List<Map<String, dynamic>> comments = [
-    {'user': '朋朋 1', 'content': '內容 A', 'time': '10:01', 'likes': 1},
-    {'user': '朋朋 2', 'content': '內容 B', 'time': '10:05', 'likes': 0},
-  ];
+  List<Map<String, dynamic>> comments = [];
+  bool loadingComments = true;
+  String? commentError;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchComments();
+  }
+
+  Future<void> fetchComments() async {
+    setState(() {
+      loadingComments = true;
+      commentError = null;
+    });
+    try {
+      // 假設店家 id = 1
+      final response = await http.get(Uri.parse('http://你的後端網址/api/stores/1/comments'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          comments = data.map((e) => Map<String, dynamic>.from(e)).toList();
+          loadingComments = false;
+        });
+      } else {
+        setState(() {
+          commentError = '留言取得失敗 (${response.statusCode})';
+          loadingComments = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        commentError = '留言取得失敗';
+        loadingComments = false;
+      });
+    }
+  }
+
+  Future<void> likeComment(int commentId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://你的後端網址/api/comments/$commentId/like'),
+      );
+      if (response.statusCode == 200) {
+        fetchComments();
+      }
+    } catch (e) {
+      // 可加錯誤提示
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,34 +158,45 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
               ],
             ),
           ),
-          ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: comments.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final sortedComments = [...comments]..sort((a, b) => b['likes'].compareTo(a['likes']));
-              final c = sortedComments[index];
-              return CommentBubble(
-                username: c['user'],
-                content: c['content'],
-                time: c['time'],
-                likes: c['likes'],
-                onLike: () {
-                  setState(() {
-                    c['likes']++;
-                  });
-                },
-              );
-            },
-          ),
+          if (loadingComments)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            )
+          else if (commentError != null)
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(commentError!, style: const TextStyle(color: Colors.red)),
+            )
+          else
+            ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: comments.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final sortedComments = [...comments]..sort((a, b) => b['likes'].compareTo(a['likes']));
+                final c = sortedComments[index];
+                return CommentBubble(
+                  username: c['user'] ?? c['username'] ?? '匿名',
+                  content: c['content'] ?? '',
+                  time: c['time'] ?? c['created_at'] ?? '',
+                  likes: c['likes'] ?? 0,
+                  onLike: () {
+                    if (c['id'] != null) {
+                      likeComment(c['id']);
+                    }
+                  },
+                );
+              },
+            ),
         ],
       ),
     );
   }
 
-// --- 滑出新增熱門品項表單 ---
+  // --- 滑出新增熱門品項表單 ---
   void _showAddMenuSheet() {
     final TextEditingController nameCtrl = TextEditingController();
 
