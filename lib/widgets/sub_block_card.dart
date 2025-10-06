@@ -11,10 +11,13 @@ class SubBlockCard extends StatefulWidget {
   State<SubBlockCard> createState() => _SubBlockCardState();
 }
 
+
+
+
 class _SubBlockCardState extends State<SubBlockCard> {
   String? storeName;
-  bool loading = true;
   String? errorMsg;
+  bool loading = true;
 
   @override
   void initState() {
@@ -23,6 +26,10 @@ class _SubBlockCardState extends State<SubBlockCard> {
   }
 
   Future<void> fetchStore() async {
+    setState(() {
+      loading = true;
+      errorMsg = null;
+    });
     try {
       final response = await http.get(Uri.parse('http://你的後端網址/api/stores/${widget.index}'));
       if (response.statusCode == 200) {
@@ -55,10 +62,21 @@ class _SubBlockCardState extends State<SubBlockCard> {
           child: loading
               ? const CircularProgressIndicator()
               : errorMsg != null
-                  ? Text(errorMsg!, style: const TextStyle(color: Colors.red))
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(errorMsg!, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: fetchStore,
+                          child: const Text('重試'),
+                        ),
+                      ],
+                    )
                   : Text(storeName ?? '無資料', style: const TextStyle(fontSize: 20)),
         ),
       ),
     );
   }
 }
+

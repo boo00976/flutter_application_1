@@ -74,7 +74,7 @@ class _MobileLayoutPageState extends State<MobileLayoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('上標 Title'),
+        title: const Text('國立聯合大學(店家名)'),//上標 應該可改id對應
         centerTitle: true,
       ),
       body: SafeArea(
